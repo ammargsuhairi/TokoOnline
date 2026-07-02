@@ -1,7 +1,33 @@
 <?php
-session_start();
-include '../includes/db.php';
-include '../includes/functions.php';
+require_once '../includes/session.php';
+require_once '../includes/db.php';
+require_once '../includes/functions.php';
+
+// ---- Wajib login sebagai USER untuk membuka halaman ini ----
+// Cek khusus user_id (bukan isLoggedIn() yang juga meloloskan admin),
+// karena halaman ini memang dashboard khusus pelanggan.
+if (!isset($_SESSION['user_id'])) {
+    header('Location: loginUser.php');
+    exit;
+}
+
+// ---- Ambil ulang data user dari database berdasarkan session ----
+// Ini lebih aman daripada hanya mengandalkan data di session:
+// - Kalau datanya sudah dihapus dari database, user otomatis di-logout.
+// - Kalau suatu saat ada halaman "Edit Profil", nama akan selalu up-to-date
+//   tanpa user harus login ulang.
+$stmtUser = $pdo->prepare("SELECT * FROM user WHERE id_user = ?");
+$stmtUser->execute([$_SESSION['user_id']]);
+$currentUser = $stmtUser->fetch();
+
+if (!$currentUser) {
+    // Data user tidak ditemukan (mungkin sudah dihapus) -> paksa logout
+    session_destroy();
+    header('Location: loginUser.php');
+    exit;
+}
+
+$namaUser = $currentUser['nama'];
 
 // Ambil produk unggulan (6 produk terbaru)
 $stmt = $pdo->query("
@@ -32,12 +58,17 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
             --border: #e0e0da;
         }
         body { font-family: 'Segoe UI', sans-serif; background: #fff; color: var(--primary); }
-        
+
         /* NAVBAR */
         .navbar { border-bottom: 1px solid var(--border); background: #fff !important; }
         .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.5px; }
         .nav-link { font-size: 0.875rem; color: #555 !important; }
-        .nav-link:hover { color: var(--primary) !important; }
+        .nav-link:hover, .nav-link.active { color: var(--primary) !important; }
+        .user-toggle { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--primary) !important; font-weight: 600; }
+        .user-toggle i.bi-person-circle { font-size: 1.3rem; color: #555; }
+        .dropdown-menu { border: 1px solid var(--border); border-radius: 10px; font-size: 0.875rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+        .dropdown-item { padding: 8px 16px; }
+        .dropdown-item i { width: 18px; }
 
         /* HERO */
         .hero { background: var(--soft); border-radius: 16px; padding: 3.5rem 3rem; margin: 1.5rem 0; }
@@ -75,25 +106,32 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container">
-        <a class="navbar-brand" href="index.php">🛍 TokoKu</a>
+        <a class="navbar-brand" href="indexUser.php">🛍 TokoKu</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navMenu">
-            <ul class="navbar-nav ms-auto gap-3">
-                <li class="nav-item"><a class="nav-link" href="index.php">Beranda</a></li>
-                <li class="nav-item"><a class="nav-link" href="katalog.php">Katalog</a></li>
+            <ul class="navbar-nav ms-auto gap-3 align-items-lg-center">
+                <li class="nav-item">
+                    <a class="nav-link active" href="indexUser.php">Beranda</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="../katalog.php">Katalog</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link user-toggle dropdown-toggle" href="#" id="userDropdown"
+                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle"></i>
+                        <span><?= htmlspecialchars($namaUser) ?></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="profil.php"><i class="bi bi-person"></i> Profil</a></li>
+                        <li><a class="dropdown-item" href="riwayat_pesanan.php"><i class="bi bi-clock-history"></i> Riwayat Pesanan</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="logoutUser.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    </ul>
+                </li>
             </ul>
-                <div class="dropdown">
-  <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-    
-  </button>
-  <ul class="dropdown-menu">
-    <li><a class="dropdown-item" href="#">Pembelian</a></li>
-    <li><a class="dropdown-item" href="#">Keranjang</a></li>
-    <li><a class="dropdown-item" href="logoutUser.php">Keluar</a></li>
-  </ul>
-</div>
         </div>
     </div>
 </nav>
@@ -103,9 +141,9 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
     <div class="hero d-flex justify-content-between align-items-center flex-wrap gap-4">
         <div>
             <span class="hero-badge">✦ Produk pilihan</span>
-            <h1>Belanja mudah,<br><span class="highlight">harga terjangkau</span></h1>
+            <h1>Halo, <?= htmlspecialchars($namaUser) ?> 👋<br><span class="highlight">Belanja lagi yuk</span></h1>
             <p class="mt-3">Temukan berbagai produk pilihan dengan kualitas terbaik dan harga yang bersahabat.</p>
-            <a href="katalog.php" class="btn btn-dark mt-2">Lihat katalog →</a>
+            <a href="../katalog.php" class="btn btn-dark mt-2">Lihat katalog →</a>
         </div>
         <div style="font-size: 6rem; line-height:1">🛒</div>
     </div>
@@ -126,7 +164,7 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
             <div class="product-card h-100">
                 <div class="product-thumb">
                    <?php if (!empty($p['gambar'])): ?>
-                        <img src="uploads/products/<?= htmlspecialchars($p['gambar']) ?>" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                        <img src="../uploads/products/<?= htmlspecialchars($p['gambar']) ?>" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
                         <i class="bi bi-box-seam no-img" style="display:none"></i>
                     <?php else: ?>
                         <i class="bi bi-box-seam no-img"></i>
@@ -156,7 +194,7 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Filter kategori
+// Filter kategori (produk unggulan di beranda)
 document.querySelectorAll('.badge-cat').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.badge-cat').forEach(b => b.classList.remove('active'));

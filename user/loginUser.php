@@ -1,13 +1,24 @@
 <?php
-session_start();
+require_once '../includes/session.php';
 include '../includes/db.php';
 include '../includes/functions.php';
 
+// ---- Tentukan tujuan redirect setelah login (default: indexUser.php) ----
+// Hanya izinkan path relatif di dalam folder toko_online untuk mencegah open redirect.
+function resolveRedirect($raw) {
+    $raw = $raw ?? '';
+    if ($raw === '' || preg_match('#^(https?:)?//#i', $raw) || str_starts_with($raw, '\\\\')) {
+        return 'indexUser.php';
+    }
+    return $raw;
+}
+$redirect = resolveRedirect($_GET['redirect'] ?? $_POST['redirect'] ?? '');
+
 if (isLoggedIn()) {
-    header('Location: indexUser.php');
+    header('Location: ' . ($redirect !== 'indexUser.php' ? '../' . $redirect : 'indexUser.php'));
     exit;
 }
-    
+
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -20,9 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $login->fetch();
 
         if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
+            // PENTING: kolom primary key tabel `user` adalah `id_user`, bukan `id`.
+            $_SESSION['user_id']       = $user['id_user'];
             $_SESSION['user_username'] = $user['username'];
-            header('Location: indexUser.php');
+            $_SESSION['user_nama']     = $user['nama'];
+            header('Location: ' . ($redirect !== 'indexUser.php' ? '../' . $redirect : 'indexUser.php'));
             exit;
         } else {
             $error = 'Username atau password salah.';
@@ -56,11 +69,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h2>Login Pelanggan</h2>
     <p class="text-muted mb-4" style="font-size:.85rem">Selamat Datang di TokoKu</p>
 
+    <?php if ($redirect !== 'indexUser.php'): ?>
+        <div class="alert alert-warning py-2 px-3" style="font-size:.85rem;border-radius:8px">
+            Silakan login terlebih dahulu untuk membuka halaman katalog.
+        </div>
+    <?php endif; ?>
+
     <?php if ($error): ?>
         <div class="alert alert-danger py-2 px-3" style="font-size:.85rem;border-radius:8px"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <form method="POST">
+        <input type="hidden" name="redirect" value="<?= htmlspecialchars($redirect) ?>">
         <div class="mb-3">
             <label class="form-label">Username</label>
             <input type="text" name="username" class="form-control" placeholder="Masukkan username" value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" required>
