@@ -2,6 +2,7 @@
 require_once '../includes/session.php';
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/cart.php';
 
 // ---- Wajib login sebagai USER untuk membuka halaman ini ----
 // Cek khusus user_id (bukan isLoggedIn() yang juga meloloskan admin),
@@ -59,17 +60,6 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
         }
         body { font-family: 'Segoe UI', sans-serif; background: #fff; color: var(--primary); }
 
-        /* NAVBAR */
-        .navbar { border-bottom: 1px solid var(--border); background: #fff !important; }
-        .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.5px; }
-        .nav-link { font-size: 0.875rem; color: #555 !important; }
-        .nav-link:hover, .nav-link.active { color: var(--primary) !important; }
-        .user-toggle { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--primary) !important; font-weight: 600; }
-        .user-toggle i.bi-person-circle { font-size: 1.3rem; color: #555; }
-        .dropdown-menu { border: 1px solid var(--border); border-radius: 10px; font-size: 0.875rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-        .dropdown-item { padding: 8px 16px; }
-        .dropdown-item i { width: 18px; }
-
         /* HERO */
         .hero { background: var(--soft); border-radius: 16px; padding: 3.5rem 3rem; margin: 1.5rem 0; }
         .hero h1 { font-size: 2.5rem; font-weight: 800; line-height: 1.15; letter-spacing: -1px; }
@@ -103,38 +93,7 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg sticky-top">
-    <div class="container">
-        <a class="navbar-brand" href="indexUser.php">🛍 TokoKu</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navMenu">
-            <ul class="navbar-nav ms-auto gap-3 align-items-lg-center">
-                <li class="nav-item">
-                    <a class="nav-link active" href="indexUser.php">Beranda</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="../katalog.php">Katalog</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link user-toggle dropdown-toggle" href="#" id="userDropdown"
-                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle"></i>
-                        <span><?= htmlspecialchars($namaUser) ?></span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="profil.php"><i class="bi bi-person"></i> Profil</a></li>
-                        <li><a class="dropdown-item" href="riwayat_pesanan.php"><i class="bi bi-clock-history"></i> Riwayat Pesanan</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="logoutUser.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<?php $base = '../'; $activeNav = 'beranda'; include '../includes/navbar.php'; ?>
 
 <!-- HERO -->
 <div class="container">
@@ -163,7 +122,7 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
         <div class="col-6 col-md-4 col-lg-2 product-item" data-cat="<?= $p['category_id'] ?>">
             <div class="product-card h-100">
                 <div class="product-thumb">
-                   <?php if (!empty($p['gambar'])): ?>
+                    <?php if (!empty($p['gambar'])): ?>
                         <img src="../uploads/products/<?= htmlspecialchars($p['gambar']) ?>" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
                         <i class="bi bi-box-seam no-img" style="display:none"></i>
                     <?php else: ?>
@@ -185,12 +144,9 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
     </div>
 </div>
 
-<!-- FOOTER -->
-<footer>
-    <div class="container text-center">
-        <p>© <?= date('Y') ?> TokoKu — Dibuat dengan ❤️ untuk tugas Pemrograman Web Lanjut</p>
-    </div>
-</footer>
+<?php
+    include '../footer.php';
+?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>

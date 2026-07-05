@@ -93,7 +93,7 @@ $categories = $pdo->query("
         <ul class="nav flex-column">
             <li class="nav-item"><a href="index.php"><i class="bi bi-box-seam"></i> Produk</a></li>
             <li class="nav-item"><a href="kategori.php" class="active"><i class="bi bi-tags"></i> Kategori</a></li>
-            <li class="nav-item"><a href="../index.php" target="_blank"><i class="bi bi-shop"></i> Lihat toko</a></li>
+            <li class="nav-item"><a href="pesanan.php"><i class="bi bi-receipt"></i> Pesanan</a></li>
         </ul>
     </nav>
 </div>
@@ -127,8 +127,8 @@ $categories = $pdo->query("
                     <div class="mb-3">
                         <label class="form-label">Nama kategori *</label>
                         <input type="text" name="nama" class="form-control"
-                               value="<?= htmlspecialchars($_POST['nama'] ?? $edit['nama'] ?? '') ?>"
-                               placeholder="cth: Elektronik" required>
+                            value="<?= htmlspecialchars($_POST['nama'] ?? $edit['nama'] ?? '') ?>"
+                            placeholder="cth: Elektronik" required>
                     </div>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn-save">
@@ -169,7 +169,7 @@ $categories = $pdo->query("
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <a href="kategori.php?delete=<?= $cat['id'] ?>" class="btn-icon danger" title="Hapus"
-                                       onclick="return confirm('Yakin hapus kategori ini?')">
+                                        onclick="return confirm('Yakin hapus kategori ini?')">
                                         <i class="bi bi-trash"></i>
                                     </a>
                                 </div>

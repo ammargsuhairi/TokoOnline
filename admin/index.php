@@ -99,7 +99,7 @@ $stok_tipis = $pdo->query("SELECT COUNT(*) FROM products WHERE stok < 10")->fetc
 <body>
 
 <!-- SIDEBAR -->
-<div class="sidebar">
+<!-- <div class="sidebar">
     <div class="sidebar-logo">⚙ TokoKu Admin</div>
     <nav>
         <ul class="nav flex-column">
@@ -114,6 +114,11 @@ $stok_tipis = $pdo->query("SELECT COUNT(*) FROM products WHERE stok < 10")->fetc
                 </a>
             </li>
             <li class="nav-item">
+                <a href="pesanan.php">
+                    <i class="bi bi-receipt"></i> Pesanan
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="../index.php" target="_blank">
                     <i class="bi bi-shop"></i> Lihat toko
                 </a>
@@ -125,13 +130,14 @@ $stok_tipis = $pdo->query("SELECT COUNT(*) FROM products WHERE stok < 10")->fetc
             <i class="bi bi-box-arrow-left"></i> Keluar
         </a>
     </div>
-</div>
+</div> -->
+
+<?php include 'sidebar.php'; ?>
 
 <!-- MAIN CONTENT -->
 <div class="main">
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <p class="text-muted mb-1" style="font-size:.8rem">Selamat datang, <?= htmlspecialchars($_SESSION['admin_username']) ?> 👋</p>
             <h1 class="page-title">Dashboard</h1>
         </div>
     </div>

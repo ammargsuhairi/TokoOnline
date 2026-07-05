@@ -1,6 +1,14 @@
 <?php
+require_once 'includes/session.php';
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
+require_once 'includes/cart.php';
+
+// Jika sudah login, arahkan ke beranda khusus user
+if (isset($_SESSION['user_id'])) {
+    header('Location: user/indexUser.php');
+    exit;
+}
 
 // Ambil produk unggulan (6 produk terbaru)
 $stmt = $pdo->query("
@@ -31,12 +39,6 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
             --border: #e0e0da;
         }
         body { font-family: 'Segoe UI', sans-serif; background: #fff; color: var(--primary); }
-        
-        /* NAVBAR */
-        .navbar { border-bottom: 1px solid var(--border); background: #fff !important; }
-        .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.5px; }
-        .nav-link { font-size: 0.875rem; color: #555 !important; }
-        .nav-link:hover { color: var(--primary) !important; }
 
         /* HERO */
         .hero { background: var(--soft); border-radius: 16px; padding: 3.5rem 3rem; margin: 1.5rem 0; }
@@ -71,22 +73,7 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg sticky-top">
-    <div class="container">
-        <a class="navbar-brand" href="index.php">🛍 TokoKu</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navMenu">
-            <ul class="navbar-nav ms-auto gap-3">
-                <li class="nav-item"><a class="nav-link" href="index.php">Beranda</a></li>
-                <li class="nav-item"><a class="nav-link" href="katalog.php">Katalog</a></li>
-                <li class="nav-item"><a class="nav-link" href="user/loginUser.php">Masuk</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<?php $base = ''; $activeNav = 'beranda'; include 'includes/navbar.php'; ?>
 
 <!-- HERO -->
 <div class="container">
@@ -115,7 +102,7 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
         <div class="col-6 col-md-4 col-lg-2 product-item" data-cat="<?= $p['category_id'] ?>">
             <div class="product-card h-100">
                 <div class="product-thumb">
-                   <?php if (!empty($p['gambar'])): ?>
+                    <?php if (!empty($p['gambar'])): ?>
                         <img src="uploads/products/<?= htmlspecialchars($p['gambar']) ?>" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
                         <i class="bi bi-box-seam no-img" style="display:none"></i>
                     <?php else: ?>
@@ -137,13 +124,9 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
     </div>
 </div>
 
-<!-- FOOTER -->
-<footer>
-    <div class="container text-center">
-        <p>© <?= date('Y') ?> TokoKu — Dibuat dengan ❤️ untuk tugas Pemrograman Web Lanjut</p>
-    </div>
-</footer>
-
+<?php
+    include 'footer.php';
+?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Filter kategori
