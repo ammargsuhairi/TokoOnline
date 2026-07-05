@@ -2,6 +2,7 @@
 require_once 'includes/session.php';
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
+require_once 'includes/cart.php';
 
 // ---- Wajib login untuk membuka halaman katalog ----
 if (!isLoggedIn()) {
@@ -102,12 +103,6 @@ function buildQuery($override = []) {
         }
         body { font-family: 'Segoe UI', sans-serif; background: #fff; color: var(--primary); }
 
-        /* NAVBAR */
-        .navbar { border-bottom: 1px solid var(--border); background: #fff !important; }
-        .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.5px; }
-        .nav-link { font-size: 0.875rem; color: #555 !important; }
-        .nav-link:hover, .nav-link.active { color: var(--primary) !important; }
-
         /* PAGE HEADER */
         .page-header { padding: 2.5rem 0 1.5rem; }
         .page-header h1 { font-size: 1.9rem; font-weight: 800; letter-spacing: -1px; }
@@ -150,29 +145,7 @@ function buildQuery($override = []) {
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg sticky-top">
-    <div class="container">
-        <a class="navbar-brand" href="index.php">🛍 TokoKu</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navMenu">
-            <ul class="navbar-nav ms-auto gap-3 align-items-lg-center">
-                <li class="nav-item"><a class="nav-link" href="user/indexUser.php">Beranda</a></li>
-                <li class="nav-item"><a class="nav-link active" href="katalog.php">Katalog</a></li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user_nama'] ?? 'Akun') ?>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="user/logoutUser.php">Keluar</a>`</li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<?php $base = ''; $activeNav = 'katalog'; include 'includes/navbar.php'; ?>
 
 <div class="container">
 
@@ -235,6 +208,7 @@ function buildQuery($override = []) {
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="product-card h-100"
                      data-bs-toggle="modal" data-bs-target="#produkModal"
+                     data-id="<?= $p['id'] ?>"
                      data-nama="<?= htmlspecialchars($p['nama']) ?>"
                      data-harga="<?= htmlspecialchars(formatRupiah($p['harga'])) ?>"
                      data-kategori="<?= htmlspecialchars($p['kategori'] ?? '-') ?>"
@@ -253,7 +227,14 @@ function buildQuery($override = []) {
                     <div class="product-body">
                         <div class="product-cat"><?= htmlspecialchars($p['kategori'] ?? '-') ?></div>
                         <div class="product-name"><?= htmlspecialchars($p['nama']) ?></div>
-                        <div class="product-price"><?= formatRupiah($p['harga']) ?></div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="product-price"><?= formatRupiah($p['harga']) ?></div>
+                            <?php if ($stok > 0): ?>
+                                <button type="button" class="btn btn-sm btn-outline-dark btn-quick-add" data-id="<?= $p['id'] ?>" title="Tambah ke keranjang" onclick="event.stopPropagation(); quickAdd(<?= $p['id'] ?>, this)">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -309,6 +290,20 @@ function buildQuery($override = []) {
                         <div class="fs-4 fw-bold mb-2" id="modalHarga"></div>
                         <span class="badge rounded-pill mb-3" id="modalStok"></span>
                         <p id="modalDeskripsi"></p>
+
+                        <div id="modalBeliArea" class="d-flex align-items-center gap-3 mt-3">
+                            <div class="input-group" style="width:130px">
+                                <button class="btn btn-outline-secondary" type="button" id="modalQtyMin">−</button>
+                                <input type="number" id="modalQty" class="form-control text-center" value="1" min="1">
+                                <button class="btn btn-outline-secondary" type="button" id="modalQtyPlus">+</button>
+                            </div>
+                            <button type="button" class="btn btn-outline-dark flex-grow-1" id="btnTambahKeranjang">
+                                <i class="bi bi-cart-plus"></i> Tambah ke Keranjang
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-dark w-100 mt-2" style="background:var(--primary)" id="btnBeliSekarang">
+                            Beli Sekarang →
+                        </button>
                     </div>
                 </div>
             </div>
@@ -316,37 +311,52 @@ function buildQuery($override = []) {
     </div>
 </div>
 
-<!-- FOOTER -->
-<footer>
-    <div class="container text-center">
-        <p>© <?= date('Y') ?> TokoKu — Dibuat dengan ❤️ untuk tugas Pemrograman Web Lanjut</p>
-    </div>
-</footer>
+<?php
+    include 'footer.php';
+?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+let modalProductId = null;
+let modalProductStok = 0;
+
 document.querySelectorAll('.product-card').forEach(card => {
     card.addEventListener('click', () => {
         const img = document.getElementById('modalImg');
         const noImg = document.getElementById('modalNoImg');
         const gambar = card.dataset.gambar;
 
+        modalProductId = parseInt(card.dataset.id, 10);
+        modalProductStok = parseInt(card.dataset.stok, 10);
+
         document.getElementById('modalNama').textContent = card.dataset.nama;
         document.getElementById('modalHarga').textContent = card.dataset.harga;
         document.getElementById('modalKategori').textContent = card.dataset.kategori;
         document.getElementById('modalDeskripsi').textContent = card.dataset.deskripsi || 'Tidak ada deskripsi untuk produk ini.';
 
-        const stok = parseInt(card.dataset.stok, 10);
+        const modalQty = document.getElementById('modalQty');
+        modalQty.value = 1;
+        modalQty.max = modalProductStok;
+
+        const stok = modalProductStok;
         const stokEl = document.getElementById('modalStok');
+        const beliArea = document.getElementById('modalBeliArea');
+        const btnBeli = document.getElementById('btnBeliSekarang');
         if (stok <= 0) {
             stokEl.textContent = 'Stok habis';
             stokEl.className = 'badge rounded-pill mb-3 bg-danger-subtle text-danger';
+            beliArea.style.display = 'none';
+            btnBeli.style.display = 'none';
         } else if (stok <= 5) {
             stokEl.textContent = 'Sisa ' + stok + ' — segera habis';
             stokEl.className = 'badge rounded-pill mb-3 bg-warning-subtle text-warning-emphasis';
+            beliArea.style.display = 'flex';
+            btnBeli.style.display = 'block';
         } else {
             stokEl.textContent = 'Stok tersedia: ' + stok;
             stokEl.className = 'badge rounded-pill mb-3 bg-success-subtle text-success';
+            beliArea.style.display = 'flex';
+            btnBeli.style.display = 'block';
         }
 
         if (gambar) {
@@ -358,6 +368,66 @@ document.querySelectorAll('.product-card').forEach(card => {
             noImg.style.display = 'block';
         }
     });
+});
+
+document.getElementById('modalQtyMin').addEventListener('click', () => {
+    const inp = document.getElementById('modalQty');
+    inp.value = Math.max(1, parseInt(inp.value || '1', 10) - 1);
+});
+document.getElementById('modalQtyPlus').addEventListener('click', () => {
+    const inp = document.getElementById('modalQty');
+    inp.value = Math.min(modalProductStok, parseInt(inp.value || '1', 10) + 1);
+});
+
+function updateCartBadge(count) {
+    const badge = document.getElementById('cartBadge');
+    if (!badge) return;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? '' : 'none';
+}
+
+function quickAdd(productId, btn) {
+    fetch('cart_action.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=add&product_id=' + productId + '&qty=1'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            updateCartBadge(data.count);
+            const icon = btn.querySelector('i');
+            icon.className = 'bi bi-check-lg';
+            setTimeout(() => { icon.className = 'bi bi-cart-plus'; }, 900);
+        } else {
+            alert(data.message || 'Gagal menambahkan ke keranjang.');
+        }
+    });
+}
+
+document.getElementById('btnTambahKeranjang').addEventListener('click', () => {
+    if (!modalProductId) return;
+    const qty = parseInt(document.getElementById('modalQty').value || '1', 10);
+    fetch('cart_action.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=add&product_id=' + modalProductId + '&qty=' + qty
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            updateCartBadge(data.count);
+            bootstrap.Modal.getInstance(document.getElementById('produkModal'))?.hide();
+        } else {
+            alert(data.message || 'Gagal menambahkan ke keranjang.');
+        }
+    });
+});
+
+document.getElementById('btnBeliSekarang').addEventListener('click', () => {
+    if (!modalProductId) return;
+    const qty = parseInt(document.getElementById('modalQty').value || '1', 10);
+    window.location.href = 'checkout.php?beli=' + modalProductId + '&qty=' + qty;
 });
 </script>
 </body>

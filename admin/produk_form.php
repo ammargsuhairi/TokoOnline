@@ -112,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <ul class="nav flex-column">
             <li class="nav-item"><a href="index.php" class="active"><i class="bi bi-box-seam"></i> Produk</a></li>
             <li class="nav-item"><a href="kategori.php"><i class="bi bi-tags"></i> Kategori</a></li>
+            <li class="nav-item"><a href="pesanan.php"><i class="bi bi-receipt"></i> Pesanan</a></li>
             <li class="nav-item"><a href="../index.php" target="_blank"><i class="bi bi-shop"></i> Lihat toko</a></li>
         </ul>
     </nav>
