@@ -98,40 +98,6 @@ $stok_tipis = $pdo->query("SELECT COUNT(*) FROM products WHERE stok < 10")->fetc
 </head>
 <body>
 
-<!-- SIDEBAR -->
-<!-- <div class="sidebar">
-    <div class="sidebar-logo">⚙ TokoKu Admin</div>
-    <nav>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a href="index.php" class="active">
-                    <i class="bi bi-box-seam"></i> Produk
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="kategori.php">
-                    <i class="bi bi-tags"></i> Kategori
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="pesanan.php">
-                    <i class="bi bi-receipt"></i> Pesanan
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="../index.php" target="_blank">
-                    <i class="bi bi-shop"></i> Lihat toko
-                </a>
-            </li>
-        </ul>
-    </nav>
-    <div class="sidebar-footer">
-        <a href="logout.php" class="d-flex align-items-center gap-2 text-decoration-none" style="color:#999;font-size:.8rem">
-            <i class="bi bi-box-arrow-left"></i> Keluar
-        </a>
-    </div>
-</div> -->
-
 <?php include 'sidebar.php'; ?>
 
 <!-- MAIN CONTENT -->
@@ -238,7 +204,7 @@ $stok_tipis = $pdo->query("SELECT COUNT(*) FROM products WHERE stok < 10")->fetc
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <a href="index.php?delete=<?= $p['id'] ?>" class="btn-icon danger" title="Hapus"
-                                   onclick="return confirm('Yakin hapus produk ini?')">
+                                onclick="return confirm('Yakin hapus produk ini?')">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </div>
