@@ -22,13 +22,6 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// Ambil data edit
-if (isset($_GET['edit'])) {
-    $stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");
-    $stmt->execute([(int)$_GET['edit']]);
-    $edit = $stmt->fetch();
-}
-
 // Proses form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nama = trim($_POST['nama'] ?? '');
