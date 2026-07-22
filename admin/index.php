@@ -10,12 +10,31 @@ if (isset($_GET['delete'])) {
     $stmt = $pdo->prepare("SELECT gambar FROM products WHERE id = ?");
     $stmt->execute([$id]);
     $prod = $stmt->fetch();
-    if ($prod && $prod['gambar'] && file_exists('../uploads/products/' . $prod['gambar'])) {
-        unlink('../uploads/products/' . $prod['gambar']);
+
+    if (!$prod) {
+        header('Location: index.php?msg=delete_notfound');
+        exit;
     }
-    $pdo->prepare("DELETE FROM products WHERE id = ?")->execute([$id]);
-    header('Location: index.php?msg=deleted');
-    exit;
+
+    try {
+        // Hapus baris produk DULU. Kalau ini gagal (mis. produk masih
+        // direferensikan oleh order_items via foreign key), gambar TIDAK
+        // ikut terhapus supaya data tidak jadi "setengah kehapus".
+        $pdo->prepare("DELETE FROM products WHERE id = ?")->execute([$id]);
+
+        // Baru setelah baris DB benar-benar terhapus, hapus file gambarnya.
+        if ($prod['gambar'] && file_exists('../uploads/products/' . $prod['gambar'])) {
+            unlink('../uploads/products/' . $prod['gambar']);
+        }
+
+        header('Location: index.php?msg=deleted');
+        exit;
+    } catch (PDOException $e) {
+        // Kemungkinan besar: produk ini sudah pernah masuk pesanan (order_items),
+        // sehingga tidak boleh dihapus langsung agar riwayat pesanan tetap utuh.
+        header('Location: index.php?msg=delete_failed');
+        exit;
+    }
 }
 
 // Ambil produk + kategori
@@ -94,6 +113,7 @@ $stok_tipis = $pdo->query("SELECT COUNT(*) FROM products WHERE stok < 10")->fetc
         .search-input { border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: .85rem; width: 200px; }
         .search-input:focus { outline: none; border-color: #888; }
         .alert-success-sm { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; border-radius: 8px; padding: 8px 14px; font-size: .85rem; }
+        .alert-danger-sm { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 8px; padding: 8px 14px; font-size: .85rem; }
     </style>
 </head>
 <body>
@@ -132,10 +152,13 @@ $stok_tipis = $pdo->query("SELECT COUNT(*) FROM products WHERE stok < 10")->fetc
 
     <!-- NOTIF -->
     <?php if (isset($_GET['msg'])): ?>
-        <div class="alert-success-sm mb-3">
+        <?php $isError = in_array($_GET['msg'], ['delete_failed', 'delete_notfound'], true); ?>
+        <div class="<?= $isError ? 'alert-danger-sm' : 'alert-success-sm' ?> mb-3">
             <?php if ($_GET['msg'] === 'added') echo '✅ Produk berhasil ditambahkan!'; ?>
             <?php if ($_GET['msg'] === 'updated') echo '✅ Produk berhasil diperbarui!'; ?>
             <?php if ($_GET['msg'] === 'deleted') echo '🗑 Produk berhasil dihapus.'; ?>
+            <?php if ($_GET['msg'] === 'delete_failed') echo '⚠ Produk tidak bisa dihapus karena sudah pernah ada di pesanan pelanggan. Hapus/arsipkan pesanan terkait dulu, atau nonaktifkan produk ini alih-alih menghapusnya.'; ?>
+            <?php if ($_GET['msg'] === 'delete_notfound') echo '⚠ Produk tidak ditemukan (mungkin sudah terhapus sebelumnya).'; ?>
         </div>
     <?php endif; ?>
 
